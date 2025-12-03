@@ -32,7 +32,7 @@ body {
   font-size: 18px;
 }
 
-#copyMarkdownBtn {
+#SmartCopyBtn {
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid #0ea5e9;
@@ -42,7 +42,7 @@ body {
   font-size: 14px;
 }
 
-#copyMarkdownBtn:hover {
+#SmartCopyBtn:hover {
   filter: brightness(0.95);
 }
 
