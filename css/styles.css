@@ -46,6 +46,20 @@ body {
   filter: brightness(0.95);
 }
 
+#pasteHtmlBtn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #27d584;
+  background: #27d584;
+  color: white;
+  cursor: pointer;
+  font-size: 14px; 
+}
+
+#pasteHtmlBtn:hover {
+  filter: brightness(0.95)
+}
+
 .content {
   padding: 16px 20px 40px;
 }
