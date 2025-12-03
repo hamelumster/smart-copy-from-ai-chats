@@ -1,6 +1,7 @@
 // js/main.js
 document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('copyMarkdownBtn');
+  const copyBtn = document.getElementById('copyMarkdownBtn');
+  const pasteBtn = document.getElementById('pasteHtmlBtn');
   const content = document.getElementById('content');
 
   // Настраиваем Turndown: markdown-выход
@@ -37,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  btn.addEventListener('click', async () => {
+  // 🔹 Кнопка "Copy as Markdown"
+  copyBtn.addEventListener('click', async () => {
     try {
       const selectionHtml = getSelectionHtml();
       const html = selectionHtml && selectionHtml.trim()
@@ -53,6 +55,24 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Ошибка копирования:', err);
       alert('Не удалось скопировать в буфер. Посмотри консоль.');
+    }
+  });
+
+  // 🔹 Кнопка "Вставить HTML из буфера"
+  pasteBtn.addEventListener('click', async () => {
+    try {
+      const html = await navigator.clipboard.readText();
+      if (!html) {
+        alert('В буфере нет текста / HTML 😢');
+        return;
+      }
+      // Подставляем HTML как есть в наш контейнер
+      content.innerHTML = html;
+      console.log('HTML из буфера вставлен в #content');
+      alert('HTML из буфера подставлен в content ✅');
+    } catch (err) {
+      console.error('Ошибка чтения буфера:', err);
+      alert('Не удалось прочитать из буфера. Открой страницу через http://localhost, а не file://');
     }
   });
 });
