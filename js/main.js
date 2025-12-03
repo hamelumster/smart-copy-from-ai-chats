@@ -1,6 +1,6 @@
 // js/main.js
 document.addEventListener('DOMContentLoaded', () => {
-  const copyBtn  = document.getElementById('copyMarkdownBtn');
+  const copyBtn  = document.getElementById('SmartCopyBtn');
   const pasteBtn = document.getElementById('pasteHtmlBtn');
   const content  = document.getElementById('content');
 
