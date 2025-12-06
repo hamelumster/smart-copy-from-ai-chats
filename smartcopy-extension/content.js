@@ -13,6 +13,8 @@ if (window.turndownPluginGfm) {
 }
 
 // Нормализация HTML из чата / документации: выкидываем мусор
+// 💡 ЗАМЕНИ этой функцией старую normalizeChatHtml
+
 function normalizeChatHtml(root) {
   // 1) Чистим служебные data-* атрибуты
   root.querySelectorAll('[data-start], [data-end]').forEach(el => {
@@ -20,23 +22,76 @@ function normalizeChatHtml(root) {
     el.removeAttribute('data-end');
   });
 
-  // 2) Удаляем кнопки "Copy code" / "Копировать код"
-  root.querySelectorAll('button').forEach(btn => {
-    const txt = btn.textContent.trim().toLowerCase();
-    if (txt === 'copy code' || txt === 'копировать код') {
+  // 2) Удаляем очевидные copy/download-кнопки (DeepSeek, ChatGPT, др.)
+  root.querySelectorAll('button, [role="button"]').forEach(btn => {
+    const txt = (btn.textContent || '').trim().toLowerCase();
+
+    if (
+      txt.includes('copy') ||
+      txt.includes('копир') ||      // копировать / скопировать
+      txt.includes('скачать') ||
+      txt.includes('download')
+    ) {
       btn.remove();
     }
   });
 
-  // 3) Удаляем хедеры над кодом вида: "js" / "python" + кнопка
+  // 3) Удаляем svg-иконки (обычно иконки кнопок в тулбарах)
+  root.querySelectorAll('svg').forEach(svg => svg.remove());
+
+  // Вспомогательная: похоже ли это на "шапку языка" (python, js, bash и т.п.)
+  const LANG_WORDS = [
+    'python', 'py',
+    'bash', 'shell', 'sh',
+    'javascript', 'js', 'typescript', 'ts',
+    'json', 'yaml', 'yml',
+    'sql', 'html', 'css',
+    'go', 'java', 'rust',
+    'c++', 'c#', 'cpp', 'php',
+    'ruby', 'r', 'swift'
+  ];
+
+  function looksLikeLangHeader(el) {
+    const raw = (el.textContent || '').trim().toLowerCase();
+    if (!raw) return false;
+    if (raw.length > 60) return false; // шапка языка обычно короткая
+
+    const normalized = raw.replace(/\s+/g, ' '); // "python   копировать" → "python копировать"
+
+    // если в тексте есть название языка — считаем шапкой
+    return LANG_WORDS.some(lang => normalized.includes(lang));
+  }
+
+  // 4) Обрабатываем все <pre> — чистим тулбары вокруг них
   root.querySelectorAll('pre').forEach(pre => {
-    pre.querySelectorAll('div').forEach(div => {
-      const hasButton = !!div.querySelector('button');
-      const hasCode   = !!div.querySelector('code');
-      if (hasButton && !hasCode) {
-        div.remove();
+    // 4.1. Предыдущий сосед — типичный случай шапки ("python | Копировать | Скачать")
+    let prev = pre.previousElementSibling;
+    if (prev) {
+      const hasButton = !!prev.querySelector('button, [role="button"]');
+      const hasCode   = !!prev.querySelector('code, pre');
+
+      if (!hasCode && (hasButton || looksLikeLangHeader(prev))) {
+        prev.remove();
       }
-    });
+    }
+
+    // 4.2. Внутри родителя тоже могут быть тулбары (DeepSeek, ChatGPT, др.)
+    const parent = pre.parentElement;
+    if (parent) {
+      parent.querySelectorAll('div, header').forEach(el => {
+        if (el === pre) return; // сам <pre> не трогаем
+
+        const hasCode   = !!el.querySelector('code, pre');
+        const hasButton = !!el.querySelector('button, [role="button"]');
+        const isToolbar =
+          el.getAttribute('role') === 'toolbar' ||
+          /toolbar/i.test(el.className || '');
+
+        if (!hasCode && (hasButton || isToolbar || looksLikeLangHeader(el))) {
+          el.remove();
+        }
+      });
+    }
   });
 }
 
