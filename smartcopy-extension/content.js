@@ -12,8 +12,52 @@ if (window.turndownPluginGfm) {
   turndownService.use(window.turndownPluginGfm.gfm);
 }
 
-// Нормализация HTML из чата / документации: выкидываем мусор
-// 💡 ЗАМЕНИ этой функцией старую normalizeChatHtml
+function stripStandaloneLanguageHeaders(markdown) {
+  const LANG_HEADERS = [
+    'python', 'py',
+    'bash', 'shell', 'sh',
+    'javascript', 'js', 'typescript', 'ts',
+    'json', 'yaml', 'yml',
+    'sql', 'html', 'css',
+    'go', 'java', 'rust',
+    'php', 'ruby', 'r',
+    'c', 'c++', 'c#', 'cpp'
+  ];
+
+  const lines = markdown.split('\n');
+  const result = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim().toLowerCase();
+
+    // Проверяем, не "одинокий ли это язык"
+    const isLang = LANG_HEADERS.includes(trimmed);
+
+    if (isLang) {
+      // Смотрим "окружение": сверху пусто/начало, снизу есть ещё текст
+      const prev = i > 0 ? lines[i - 1].trim() : '';
+      // ищем следующую НЕпустую строку
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() === '') {
+        j++;
+      }
+      const hasNextNonEmpty = j < lines.length;
+
+      const looksLikeHeader =
+        (prev === '' || prev.startsWith('#')) && hasNextNonEmpty;
+
+      if (looksLikeHeader) {
+        // пропускаем ЭТУ строку, не добавляем в result
+        continue;
+      }
+    }
+
+    result.push(line);
+  }
+
+  return result.join('\n');
+}
 
 function normalizeChatHtml(root) {
   // 1) Чистим служебные data-* атрибуты
@@ -140,7 +184,8 @@ async function smartCopySelectionAsMarkdown() {
   // чистим мусор
   normalizeChatHtml(wrapper);
 
-  const markdown = turndownService.turndown(wrapper.innerHTML);
+  let markdown = turndownService.turndown(wrapper.innerHTML);
+  markdown = stripStandaloneLanguageHeaders(markdown);
 
   try {
     await navigator.clipboard.writeText(markdown);
