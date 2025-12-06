@@ -1,0 +1,3 @@
+Turndown is copyright © 2017+ Dom Christie
+Released under the MIT License
+https://github.com/mixmark-io/turndown
