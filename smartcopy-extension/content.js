@@ -185,12 +185,28 @@ async function smartCopySelectionAsMarkdown() {
   normalizeChatHtml(wrapper);
 
   let markdown = turndownService.turndown(wrapper.innerHTML);
-  markdown = stripStandaloneLanguageHeaders(markdown);
+
+  // 👇 пост-обработка только на ИИ-доменах
+  const host = (location && location.host ? location.host : '').toLowerCase();
+  const AI_HOSTS = [
+    'chat.openai.com',
+    'chatgpt.com',
+    'deepseek.com',
+    'chat.deepseek.com',
+    'claude.ai',
+    'poe.com',
+    'perplexity.ai',
+    'bard.google.com',
+    'gemini.google.com'
+  ];
+
+  if (AI_HOSTS.some(h => host.endsWith(h))) {
+    markdown = stripStandaloneLanguageHeaders(markdown);
+  }
 
   try {
     await navigator.clipboard.writeText(markdown);
     console.log('SmartCopy — Markdown скопирован:\n', markdown);
-    // без alert
   } catch (err) {
     console.error('SmartCopy: ошибка копирования в буфер', err);
     alert('SmartCopy: не удалось скопировать в буфер.');
